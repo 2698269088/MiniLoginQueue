@@ -126,7 +126,3 @@ mvn package
 ## 语言
 
 语言文件位于 `plugins/MiniLoginQueue/lang/`，支持 `zh_CN`、`zh_TW`、`en_US`。修改 `config.yml` 的 `language` 字段切换；旧语言文件缺少新增键时会自动补全默认文案。
-
-## 许可
-
-本项目为作者 MCOCET 的原创作品，未经授权请勿用于商业用途或二次分发。
