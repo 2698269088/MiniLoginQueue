@@ -4,7 +4,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import top.mcocet.miniloginqueue.auth.AuthMeCompatManager;
-import top.mcocet.miniloginqueue.auth.AuthMeLoginListener;
 import top.mcocet.miniloginqueue.bungee.BungeeMessenger;
 import top.mcocet.miniloginqueue.command.MiniLoginQueueCommand;
 import top.mcocet.miniloginqueue.gui.ServerSelectorMenu;
@@ -55,12 +54,8 @@ public final class MiniLoginQueue extends JavaPlugin {
             getLogger().info("已配置目标服务器: " + String.join(", ", servers));
         }
 
-        // AuthMe 登录验证（可选软依赖，未安装自动跳过）
+        // AuthMe 登录验证（可选软依赖，反射集成：编译期不引用 AuthMe 类，未安装自动跳过）
         this.authMeCompatManager = new AuthMeCompatManager(this);
-        if (authMeCompatManager.isRequiringAuth()) {
-            // 仅当 AuthMe 可用时才注册其事件监听器（类加载依赖 AuthMe 事件）
-            getServer().getPluginManager().registerEvents(new AuthMeLoginListener(this), this);
-        }
 
         // BungeeCord 原生通道通信
         this.messenger = new BungeeMessenger(this);
@@ -125,6 +120,8 @@ public final class MiniLoginQueue extends JavaPlugin {
                 // 请求各服务器在线人数；响应到达时自动触发队列处理与菜单刷新
                 messenger.refresh();
                 queueManager.processQueue();
+                // 轮询检测已通过 AuthMe 登录的待认证玩家（无等待玩家时零开销）
+                queueManager.tickPendingAuthJoin();
                 serverSelectorMenu.updateOpenMenus();
             }
         }.runTaskTimer(this, 40L, interval * 20L);

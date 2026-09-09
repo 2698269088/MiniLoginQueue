@@ -34,7 +34,8 @@ import java.util.UUID;
  * 负载低于阈值时按优先级依次放行队首玩家。
  * <p>
  * AuthMe 集成了认证门禁：要求认证时，未登录玩家不能入队也不能被放行；
- * 自动排队模式下未登录玩家会被登记，登录成功后由 AuthMeLoginListener 回调自动入队。
+ * 自动排队模式下未登录玩家会被登记，由主类刷新周期轮询检测，
+ * 登录成功后自动补完入队流程（反射调用 AuthMe API，无编译期依赖）。
  */
 public class QueueManager implements Listener {
 
@@ -181,14 +182,25 @@ public class QueueManager implements Listener {
     }
 
     /**
-     * 玩家通过 AuthMe 登录后的回调（由 AuthMeLoginListener 触发）
-     * 自动排队模式下补完未完成的入队请求
+     * 周期检测已登录的待认证玩家（由主类刷新任务每轮调用）
+     * 原 AuthMe 事件监听器依赖编译期引入 LoginEvent 类，已改为反射集成下的轮询：
+     * 无待认证玩家时直接返回（零开销），登录成功后补完未完成的入队请求。
      */
-    public void onAuthLogin(Player player) {
-        if (!pendingAuthJoin.remove(player.getUniqueId())) {
+    public void tickPendingAuthJoin() {
+        if (pendingAuthJoin.isEmpty()) {
             return;
         }
-        requestJoin(player);
+        for (UUID uuid : new ArrayList<>(pendingAuthJoin)) {
+            Player player = plugin.getServer().getPlayer(uuid);
+            if (player == null || !player.isOnline()) {
+                pendingAuthJoin.remove(uuid);
+                continue;
+            }
+            if (authMeCompatManager.isAuthenticated(player)) {
+                pendingAuthJoin.remove(uuid);
+                requestJoin(player);
+            }
+        }
     }
 
     /**
