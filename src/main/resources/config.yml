@@ -1,0 +1,136 @@
+# 插件语言（支持 zh_CN、zh_TW、en_US）
+language: zh_CN
+
+# 是否启用调试日志（输出详细的放行与入队信息）
+debug: false
+
+# 目标服务器配置
+# 插件部署在 BungeeCord 代理下的登录排队服中（spigot.yml 需开启 bungeecord: true）。
+# servers 中的 name 必须与代理端（BungeeCord/Velocity）配置的服务器名一致。
+# 每个服务器拥有独立的排队队列；配置多个服务器后，玩家可通过服务器选择菜单
+# 或 /mlq join <服务器名> 指定目标服务器。
+servers:
+  - name: "main"
+    # 该服务器在服务器选择菜单中显示的名称（支持颜色代码 &）
+    # 不配置或留空时，菜单直接显示 name 的内部名
+    display-name: "&b主服务器"
+  # - name: "main2"
+  #   display-name: "&d生存服2"
+
+# 服务器选择菜单
+server-selector:
+  # 是否启用多服务器选择菜单（仅当 servers 数量大于 1 时生效）
+  enabled: true
+  # 菜单标题（支持颜色代码 &）
+  title: "&a选择要加入的服务器"
+  # 在线服务器显示的物品
+  online-material: "LIME_STAINED_GLASS_PANE"
+  # 离线服务器显示的物品
+  offline-material: "RED_STAINED_GLASS_PANE"
+  # 状态未知（尚未收到代理响应）服务器显示的物品
+  unknown-material: "GRAY_STAINED_GLASS_PANE"
+
+# 排队队列配置
+queue:
+  # 容量回退值：MSLP 直连探测尚未取得真实容量（或 mslp-enabled 关闭）时使用
+  max-online: 50
+  # 放行阈值（0.0 - 1.0），服务器负载超过此比例时暂停放行
+  threshold: 0.8
+  # 每轮状态刷新最多放行的玩家数（0 表示不限制，用于控制放行节奏）
+  release-limit: 0
+  # 服务器人数查询与放行检查周期（秒）
+  refresh-interval: 3
+  # 玩家加入后是否自动进入排队队列
+  # false: 玩家需点击物品栏中的“加入游戏”按钮或使用 /join 手动入队
+  # true:  玩家进入后自动排队（多服务器时自动弹出选择菜单）
+  auto-queue: false
+  # 是否启用直连探测（Minecraft Server List Ping / MSLP）
+  # 登录服通过 BC ServerIP 通道解析子服地址后，直接 TCP 探测子服：
+  # - 探测成功：使用子服上报的真实在线人数/最大容量/延迟，负载达到阈值即暂停放行
+  # - 探测失败：判定服务器离线（比 BC 通道更准确，可检测 BC 已配置但实际宕机的服务器）
+  # 若登录服与子服端口无法直连（网络隔离/防火墙），请设为 false 回退到纯 BC 通道模式
+  mslp-enabled: true
+  # 直连探测超时（毫秒），过短可能误判，过长会拖慢离线检测
+  mslp-timeout: 5000
+  # auto-queue 为 true 时，玩家加入后等待的秒数（期间无法操作，避免快速重进误排）
+  lock-time: 3
+  # 是否启用优先排队系统（规则见下方 priority 列表）
+  priority-enabled: true
+  # 优先级规则（越靠前默认权重越高，也可自定义权重）
+  # 支持以下匹配方式：
+  #   permission:权限节点[:权重] - 拥有指定权限的玩家
+  #   name:玩家名[:权重]         - 指定玩家名（精确匹配）
+  #   uuid:玩家UUID[:权重]       - 指定玩家UUID
+  #   regex:正则表达式[:权重]     - 玩家名匹配正则表达式
+  #   group:权限组名[:权重]       - 拥有指定权限组的玩家（通过 group.组名 权限检测）
+  # 权重越高优先级越高，不指定权重时按列表顺序递减（第一条100，第二条99...）
+  priority:
+    - "permission:vip:100"
+    - "permission:svip:80"
+    - "regex:^[A-Z].*:50"
+  # 默认优先级（数字越大越靠前）
+  default-priority: 0
+  # 是否限制排队中的玩家移动
+  restrict-movement: false
+  # 是否设置玩家加入后的游戏模式（拥有 miniloginqueue.admin.bypass 权限的管理员保持原模式）
+  set-gamemode: true
+  # 玩家加入后的游戏模式（SURVIVAL, CREATIVE, ADVENTURE, SPECTATOR）
+  gamemode: ADVENTURE
+  # 是否限制排队玩家的活动范围（越界会被拉回区域边缘，管理员不受限）
+  restrict-range: false
+  # 是否启用排队区域保护（区域见下方 range）：
+  # - 区域内禁止以任何方式破坏/放置方块（玩家、爆炸、火焰燃烧/蔓延、融化、实体搬运、液体流动等）
+  # - 排队玩家在区域内免疫一切伤害，且区域内禁止 PVP
+  spawn-protection: true
+  # 排队区域（restrict-range 与 spawn-protection 共用）
+  # 以 pos1/pos2 两个对角坐标定义三维长方体区域，所在世界取 queue.spawn.world
+  # 请按实际等待区范围调整；坐标未配置完整时上述两项功能自动禁用
+  range:
+    pos1:
+      x: -30.0
+      y: 60.0
+      z: -30.0
+    pos2:
+      x: 30.0
+      y: 120.0
+      z: 30.0
+  # 管理员是否不受等待区限制（拥有 miniloginqueue.admin.bypass 权限）
+  admin-bypass: true
+  # 玩家出生点配置
+  spawn:
+    # 出生点世界
+    world: "world"
+    # 出生点中心坐标与朝向
+    x: 0.0
+    y: 64.0
+    z: 0.0
+    pitch: 0.0
+    yaw: 0.0
+    # 随机出生半径（在中心点周围此半径内随机生成位置，0 表示固定位置）
+    radius: 5.0
+  # 手动入队时发放的“加入游戏”按钮物品配置
+  queue-item:
+    # 物品所在槽位（0-8 为主手栏）
+    slot: 4
+    # 物品类型
+    material: BEACON
+    # 物品显示名称（支持颜色代码 &）
+    name: "&a加入游戏"
+
+# AuthMe 登录验证（可选集成）
+auth:
+  # 是否要求玩家先通过 AuthMe 登录才能加入排队队列
+  # true:  服务器装有 AuthMe 时生效——未登录玩家禁止入队/放行；未装 AuthMe 时自动跳过
+  # false: 完全禁用登录验证
+  enabled: true
+
+# 等待区行为限制
+restrictions:
+  # 总开关：设为 false 时以下全部限制失效（不影响排队/放行功能）
+  enabled: true
+  # 是否允许排队玩家与方块交互（点击按钮、开门等）
+  allow-block-interact: false
+  # 是否允许排队玩家放置方块
+  allow-block-place: false
+  # 是否允许排队玩家破坏方块
+  allow-block-break: false

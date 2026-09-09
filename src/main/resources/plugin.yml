@@ -1,0 +1,48 @@
+name: MiniLoginQueue
+version: '${project.version}'
+main: top.mcocet.miniloginqueue.MiniLoginQueue
+api-version: '1.13'
+authors: [MCOCET]
+description: 迷你版多服务器登录队列
+website: https://home.mcocet.top
+
+# AuthMe 可选集成：装有 AuthMe 时强制先登录才能入队（加载顺序保证 AuthMe 先启用）
+softdepend: [AuthMe]
+
+commands:
+  mlq:
+    description: MiniLoginQueue 主命令
+    usage: /mlq <join|leave|menu|skip|send|where|ip|list|status|refresh|pause|resume|reload|help>
+    aliases: [miniloginqueue]
+  join:
+    description: 加入服务器排队队列
+    usage: /join [服务器]
+
+permissions:
+  miniloginqueue.admin.skip:
+    description: 允许直接放行玩家（跳过排队）
+    default: op
+  miniloginqueue.admin.send:
+    description: 允许通过 ConnectOther 将任意玩家转移至指定服务器
+    default: op
+  miniloginqueue.admin.where:
+    description: 允许查询玩家当前所在服务器
+    default: op
+  miniloginqueue.admin.ip:
+    description: 允许查询玩家的真实 IP
+    default: op
+  miniloginqueue.admin.list:
+    description: 允许查看排队列表
+    default: op
+  miniloginqueue.admin.status:
+    description: 允许查看服务器状态与手动刷新
+    default: op
+  miniloginqueue.admin.pause:
+    description: 允许暂停/恢复队列
+    default: op
+  miniloginqueue.admin.reload:
+    description: 允许重新加载配置
+    default: op
+  miniloginqueue.admin.bypass:
+    description: 不受等待区限制
+    default: op

@@ -1,0 +1,12 @@
+# IDE
+.idea/
+*.iml
+
+# 构建产物
+target/
+dependency-reduced-pom.xml
+
+# 系统文件
+*.log
+.DS_Store
+Thumbs.db
